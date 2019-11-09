@@ -2,9 +2,6 @@ buildscript {
   repositories {
     google()
     jcenter()
-    maven {
-      url("$projectDir/android-repository")
-    }
   }
   dependencies {
     classpath 'com.android.tools.build:gradle:3.5.1'
@@ -14,6 +11,8 @@ buildscript {
 plugins {
   id "io.invertase.gradle.build" version "1.3"
 }
+
+apply plugin: 'com.android.library'
 
 project.ext {
   set('react-native', [
@@ -35,7 +34,10 @@ project.ext {
 }
 
 android {
+  compileSdkVersion 28
   defaultConfig {
+    targetSdkVersion 28
+    minSdkVersion 18
     multiDexEnabled true
   }
   lintOptions {
@@ -49,18 +51,42 @@ android {
 }
 
 repositories {
+  google()
+  jcenter()
   maven {
-    url("$projectDir/android-repository")
+    url("$rootDir/../node_modules/react-native/android")
   }
-  mavenLocal()
+  maven {
+    url("$rootDir/../../../tests_react_native/node_modules/react-native/android")
+  }
 }
 
 dependencies {
-  implementation 'invertase:notifee:+'
+  api 'com.facebook.react:react-native:+'
+  implementation 'androidx.work:work-runtime:2.2.0'
+  implementation "com.squareup.okhttp3:okhttp:4.2.1"
+  implementation 'com.google.android.gms:play-services-tasks:17.0.0'
 }
 
 apply from: file("./notifee-json.gradle")
 
+println "$rootDir/../../../node_modules/react-native/android"
+
 ReactNative.shared.applyPackageVersion()
 ReactNative.shared.applyDefaultExcludes()
-ReactNative.module.applyAndroidVersions()
+//ReactNative.module.applyAndroidVersions()
+//ReactNative.module.applyReactNativeDependency("api")
+
+apply plugin: 'maven'
+
+task generateReactArchive(type: Upload) {
+  configuration = configurations.archives
+  repositories.mavenDeployer {
+    repository url: "file://${rootDir}/android-repository"
+    pom.project {
+      groupId 'io.invertase.notifee'
+      artifactId 'notifee'
+      version '0.0.1'
+    }
+  }
+}
